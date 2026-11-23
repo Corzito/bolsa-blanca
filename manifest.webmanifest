@@ -1,0 +1,16 @@
+{
+  "name": "Bolsa Blanca - Ayuda al reciclador",
+  "short_name": "Bolsa Blanca",
+  "description": "Aprende a separar en la fuente y ayuda al reciclador de tu barrio.",
+  "lang": "es-CO",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F2F2F7",
+  "theme_color": "#34C759",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

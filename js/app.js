@@ -49,7 +49,7 @@
   };
 
   /* ---------- Navegación por pestañas ---------- */
-  const titulos = { inicio: 'Inicio', guia: 'Guía', reto: 'Reto', reglas: 'Reglas', seguimiento: 'Seguimiento' };
+  const titulos = { inicio: 'ProAmbientes', guia: 'Guía', reto: 'Reto', reglas: 'Reglas', seguimiento: 'Seguimiento' };
   const nav = $('#nav');
   const mostrar = () => {
     const v = (location.hash || '#inicio').slice(1);
@@ -69,8 +69,12 @@
   $('#fecha').textContent = hoy.charAt(0).toUpperCase() + hoy.slice(1);
   const marcaImg = $('#marca');
   marcaImg.onerror = () => marcaImg.hidden = true;
-  marcaImg.onload = () => marcaImg.hidden = false;
-  marcaImg.src = MARCA.logo;
+  /* Bienvenida con el logo: una vez por sesión */
+  const splash = $('#splash');
+  let vista = false;
+  try { vista = sessionStorage.getItem('bb_splash'); sessionStorage.setItem('bb_splash', '1'); } catch { }
+  if (vista || matchMedia('(prefers-reduced-motion: reduce)').matches) splash.remove();
+  else setTimeout(() => { splash.classList.add('fuera'); setTimeout(() => splash.remove(), 600); }, 1700);
   $$('.bag-mini').forEach(el => el.innerHTML = bagSVG(el.dataset.b));
 
   $('#bagRow').innerHTML = Object.entries(BOLSAS).map(([k, b]) => `

@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Bolsa Blanca</title>
-  <meta name="description" content="Aprende a separar en la fuente y ayuda al reciclador de tu barrio.">
+  <title>Bolsa Blanca · ProAmbientes</title>
+  <meta name="description" content="ProAmbientes: aprende a separar en la fuente y ayuda al reciclador de tu barrio.">
   <meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -12,12 +12,17 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Bolsa Blanca">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
   <canvas id="fondo" aria-hidden="true"></canvas>
+  <!-- Pantalla de bienvenida -->
+  <div class="splash" id="splash" aria-hidden="true">
+    <img src="assets/logo.png" alt="">
+    <p>Separa bien, ayuda al reciclador</p>
+  </div>
   <!-- Íconos (estilo SF Symbols) -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" fill="currentColor"/></symbol>
@@ -41,9 +46,9 @@
   <main id="app">
     <!-- INICIO -->
     <section class="view" data-view="inicio">
-      <div class="brand-row">
-        <div><p class="eyebrow" id="fecha"></p><h1 class="large">Bolsa Blanca</h1></div>
-        <img id="marca" class="marca" alt="Logo de la organización" hidden>
+      <div class="brand">
+        <img id="marca" class="marca" src="assets/logo.png" alt="ProAmbientes">
+        <p class="brand-sub"><b>Bolsa Blanca</b> · <span id="fecha"></span></p>
       </div>
 
       <div class="hero">

@@ -1,10 +1,10 @@
 /* Guarda la app en el celular para que funcione sin internet.
    Si cambias algún archivo, sube el número de VERSION para que se actualice. */
-const VERSION = 'bolsa-blanca-v4';
+const VERSION = 'bolsa-blanca-v5';
 const ARCHIVOS = [
   './', './index.html', './css/styles.css', './js/data.js', './js/fondo.js', './js/insignias.js', './js/app.js',
   './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png',
-  './icons/icon-512.png', './icons/apple-touch-icon.png', './assets/infografia.jpg', './assets/logo.png'
+  './icons/icon-512.png', './icons/icon-maskable-512.png', './icons/apple-touch-icon.png', './assets/infografia.jpg', './assets/logo.png'
 ];
 
 self.addEventListener('install', e => {

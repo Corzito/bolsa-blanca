@@ -22,3 +22,11 @@ Todo el texto está en `js/data.js`. Después de cambiar archivos, sube `VERSION
 ## Instalar en el celular
 - **Android (Chrome)**: abrir el link → menú ⋮ → *Instalar aplicación*.
 - **iPhone (Safari)**: abrir el link → Compartir → *Agregar a inicio*.
+
+## Logo de la organización
+Guarda el logo como `assets/logo.png` (mejor con fondo transparente). Sale en Inicio y en los stickers.
+El nombre que aparece abajo en el sticker se cambia en `js/data.js` → `MARCA.nombre`.
+
+## Insignias
+Cada vivienda gana insignias por visitas seguidas que cumplen: Semilla (1), Brote (3), Árbol (6) y Guardián (10).
+"Cumple parcial" mantiene la racha y "No cumple" la reinicia. Los niveles se editan en `js/data.js` → `NIVELES`.

@@ -292,3 +292,38 @@ main{position:relative;z-index:1}
 }
 .hero{padding-bottom:62px;min-height:230px}
 .cloud.c1{opacity:.35}
+
+/* ===== Logo, retroalimentación e insignias ===== */
+.brand-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.brand-row .large{margin-bottom:16px}
+.marca{height:58px;max-width:110px;object-fit:contain;margin-bottom:16px;padding:5px 7px;border-radius:14px;background:#fff;box-shadow:0 4px 14px rgba(0,0,0,.08)}
+#segSeg{margin:12px 0 0}
+.retro{display:flex;flex-direction:column;gap:8px}
+.retro-item{display:flex;gap:12px;align-items:flex-start;background:var(--card);border-radius:var(--r);padding:12px 14px;
+  -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border-left:4px solid var(--orange)}
+.retro-item b{display:block;font-size:16px}
+.retro-item span{color:var(--ink2);font-size:14px}
+.retro-n{width:26px;height:26px;border-radius:50%;background:var(--orange);color:#fff;font-weight:800;display:grid;place-items:center;flex:none;font-size:15px}
+.retro-hero{display:flex;gap:14px;align-items:center;border-radius:20px;padding:18px;color:#fff;background:linear-gradient(135deg,#FF9F0A,#E07B00)}
+.retro-hero.no{background:linear-gradient(135deg,#FF453A,#C9271E)}
+.retro-hero b{display:block;font-size:22px}
+.retro-hero span{opacity:.9;font-size:15px}
+.retro-big{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.25);display:grid;place-items:center;font-size:26px;font-weight:800;flex:none}
+.aviso{background:var(--card);border-radius:var(--r);padding:12px 14px;margin:12px 0 0;font-size:15px;color:var(--red)}
+.meta{display:flex;gap:14px;align-items:center}
+.meta b{display:block}
+.meta span{color:var(--ink2);font-size:14px}
+.niveles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:14px 0 6px}
+.nivel{background:var(--card);border-radius:var(--r);padding:10px 4px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:2px;
+  -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+.nivel b{font-size:13px}
+.nivel span{font-size:11px;color:var(--ink2)}
+.viv svg:first-child{flex:none}
+.sticker{width:min(78vw,320px);margin:8px auto 4px;filter:drop-shadow(0 12px 24px rgba(0,0,0,.25));animation:aparecer .6s cubic-bezier(.2,.9,.3,1.4)}
+.sticker svg{width:100%;height:auto;display:block}
+@keyframes aparecer{from{transform:scale(.6) rotate(-12deg);opacity:0}to{transform:none;opacity:1}}
+.logro-t{text-align:center;font-size:18px;margin:10px 0 0}
+.viv-t{font-size:24px;margin:4px 4px 8px;text-wrap:balance}
+.prog-row{display:flex;justify-content:space-between;align-items:baseline}
+.prog-row span{color:var(--ink2);font-size:14px}
+@media (prefers-reduced-motion:reduce){.sticker{animation:none}}

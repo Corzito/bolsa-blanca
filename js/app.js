@@ -67,6 +67,10 @@
   /* ---------- INICIO ---------- */
   const hoy = new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
   $('#fecha').textContent = hoy.charAt(0).toUpperCase() + hoy.slice(1);
+  const marcaImg = $('#marca');
+  marcaImg.onerror = () => marcaImg.hidden = true;
+  marcaImg.onload = () => marcaImg.hidden = false;
+  marcaImg.src = MARCA.logo;
   $$('.bag-mini').forEach(el => el.innerHTML = bagSVG(el.dataset.b));
 
   $('#bagRow').innerHTML = Object.entries(BOLSAS).map(([k, b]) => `
@@ -230,20 +234,35 @@
     return n === CHEQUEOS.length ? 'cumple' : n >= 2 ? 'parcial' : 'no';
   };
   const fechaCorta = iso => new Date(iso).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'short' });
+  const dirTexto = h => [h.direccion || 'Sin dirección', h.casa].filter(Boolean).join(' · ');
+  const fallos = ch => CHEQUEOS.filter(c => !ch[c.id]);
+
+  /* Pestañas Visitas / Viviendas */
+  let segVista = 'visitas';
+  $('#segSeg').addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    segVista = b.dataset.k;
+    renderSeguimiento();
+  });
 
   function renderSeguimiento() {
+    $$('#segSeg button').forEach(b => b.setAttribute('aria-selected', b.dataset.k === segVista));
     const tot = visitas.length;
     const cnt = { cumple: 0, parcial: 0, no: 0 };
     visitas.forEach(v => cnt[v.resultado]++);
     const pct = k => tot ? Math.round(cnt[k] / tot * 100) : 0;
     $('#resumen').innerHTML = `
-      <div class="ring"><b>${tot}</b><span>Casas</span></div>
+      <div class="ring"><b>${tot}</b><span>Visitas</span></div>
       <div class="ring c"><b>${cnt.cumple}</b><span>Cumple</span></div>
       <div class="ring p"><b>${cnt.parcial}</b><span>Parcial</span></div>
       <div class="ring n"><b>${cnt.no}</b><span>No cumple</span></div>
       ${tot ? `<div style="grid-column:1/-1"><div class="bar"><i style="width:${pct('cumple')}%;background:var(--green)"></i><i style="width:${pct('parcial')}%;background:var(--orange)"></i><i style="width:${pct('no')}%;background:var(--red)"></i></div></div>` : ''}`;
 
     const f = norm($('#qSeg').value.trim());
+    $('#qSeg').placeholder = segVista === 'visitas' ? 'Buscar dirección' : 'Buscar vivienda';
+    if (segVista === 'viviendas') return renderViviendas(f);
+
     const lista = visitas.filter(v => !f || norm(v.direccion + ' ' + v.casa + ' ' + v.obs).includes(f)).sort((a, b) => b.fecha.localeCompare(a.fecha));
     if (!lista.length) {
       $('#visitas').innerHTML = `<div class="empty"><div class="bag-art">${bagSVG('blanca')}</div>${tot ? 'Sin resultados para esa búsqueda.' : 'Aún no hay visitas. Toca <b>+</b> para registrar la primera casa.'}</div>`;
@@ -256,35 +275,69 @@
       <div class="list inset">${vs.map(v => `
         <button class="row" data-id="${v.id}">
           <span class="dot" style="background:${RES[v.resultado].c};border:0"></span>
-          <span class="row-main">${esc(v.direccion || 'Sin dirección')}${v.casa ? ' · ' + esc(v.casa) : ''}
+          <span class="row-main">${esc(dirTexto(v))}
             <span class="row-sub">${RES[v.resultado].t}${v.obs ? ' · ' + esc(v.obs) : ''}</span></span>
           <svg class="chev"><use href="#i-chev"/></svg>
         </button>`).join('')}</div>`).join('');
   }
+
+  function renderViviendas(f) {
+    const hs = Insignias.viviendas(visitas)
+      .filter(h => !f || norm(h.direccion + ' ' + h.casa).includes(f))
+      .sort((a, b) => b.racha - a.racha || b.cumple - a.cumple);
+    const leyenda = `<div class="niveles">${NIVELES.map(n => `
+      <div class="nivel">${Insignias.insigniaMini(n, 46)}<b>${n.nombre}</b><span>${n.racha} ${n.racha === 1 ? 'visita' : 'seguidas'}</span></div>`).join('')}</div>
+      <p class="hint">Cada visita que cumple suma a la racha. "Cumple parcial" la mantiene y "No cumple" la reinicia.</p>`;
+    if (!hs.length) {
+      $('#visitas').innerHTML = leyenda + `<div class="empty">${visitas.length ? 'Sin resultados para esa búsqueda.' : 'Cuando registres visitas, aquí verás cada vivienda con su insignia.'}</div>`;
+      return;
+    }
+    $('#visitas').innerHTML = leyenda + `<div class="list inset">${hs.map(h => `
+      <button class="row viv" data-k="${esc(h.clave)}">
+        ${Insignias.insigniaMini(h.nivel, 44)}
+        <span class="row-main">${esc(dirTexto(h))}
+          <span class="row-sub">${h.nivel ? h.nivel.nombre : 'Sin insignia'} · racha ${h.racha} · ${h.visitas.length} ${h.visitas.length === 1 ? 'visita' : 'visitas'}</span></span>
+        <span class="dot" style="background:${RES[h.ultima.resultado].c};border:0" title="Última visita"></span>
+        <svg class="chev"><use href="#i-chev"/></svg>
+      </button>`).join('')}</div>`;
+  }
+
   $('#qSeg').addEventListener('input', renderSeguimiento);
   $('#visitas').addEventListener('click', e => {
     const r = e.target.closest('[data-id]');
-    if (r) abrirVisita(visitas.find(v => v.id === r.dataset.id));
+    if (r) return abrirVisita(visitas.find(v => v.id === r.dataset.id));
+    const h = e.target.closest('[data-k].viv');
+    if (h) abrirVivienda(h.dataset.k);
   });
   $('#nuevo').addEventListener('click', () => abrirVisita());
 
   /* Hoja modal */
   const sheet = $('#sheet'), backdrop = $('#backdrop');
-  const abrirSheet = html => { sheet.onclick = sheet.onchange = null; $('#sheetBody').innerHTML = html; sheet.hidden = backdrop.hidden = false; document.body.style.overflow = 'hidden'; };
+  const abrirSheet = html => { sheet.onclick = sheet.onchange = sheet.oninput = null; $('#sheetBody').innerHTML = html; sheet.hidden = backdrop.hidden = false; sheet.scrollTop = 0; document.body.style.overflow = 'hidden'; };
   const cerrarSheet = () => { sheet.hidden = backdrop.hidden = true; document.body.style.overflow = ''; };
   backdrop.addEventListener('click', cerrarSheet);
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !sheet.hidden) cerrarSheet(); });
+
+  const retroHTML = ch => {
+    const fs = fallos(ch);
+    if (!fs.length) return '';
+    return `<div class="retro">${fs.map(c => `
+      <div class="retro-item"><span class="retro-n">!</span><div><b>${esc(RETRO[c.id].titulo)}</b><span>${esc(RETRO[c.id].texto)}</span></div></div>`).join('')}</div>`;
+  };
 
   function abrirVisita(v) {
     const nueva = !v;
     v = v || { id: Date.now().toString(36), fecha: new Date().toISOString(), direccion: '', casa: '', ch: {}, resultado: 'no', obs: '', manual: false };
     let manual = v.manual;
+    const dirs = [...new Set(visitas.map(x => x.direccion).filter(Boolean))];
     abrirSheet(`
       <div class="sheet-head"><button class="link" data-a="cancelar">Cancelar</button><h3>${nueva ? 'Nueva visita' : 'Editar visita'}</h3><button class="link bold" data-a="guardar">Guardar</button></div>
       <div class="list inset">
-        <label class="row field"><span class="row-main" style="flex:none;width:96px">Dirección</span><input id="fDir" value="${esc(v.direccion)}" placeholder="Calle 10 # 5-20"></label>
+        <label class="row field"><span class="row-main" style="flex:none;width:96px">Dirección</span><input id="fDir" value="${esc(v.direccion)}" placeholder="Calle 10 # 5-20" list="dirList" autocomplete="off"></label>
         <label class="row field"><span class="row-main" style="flex:none;width:96px">Casa / apto</span><input id="fCasa" value="${esc(v.casa)}" placeholder="Apto 301"></label>
       </div>
+      <datalist id="dirList">${dirs.map(d => `<option value="${esc(d)}">`).join('')}</datalist>
+      <p class="hint" id="fViv"></p>
       <p class="label">Chequeo</p>
       <div class="list inset">${CHEQUEOS.map(c => `
         <label class="row"><span class="row-main">${c.label}${c.sub ? `<span class="row-sub">${c.sub}</span>` : ''}</span>
@@ -292,6 +345,7 @@
       <p class="label">Resultado final</p>
       <div class="result-seg">${Object.entries(RES).map(([k, r]) => `<button data-r="${k}" aria-pressed="${v.resultado === k}">${r.t}</button>`).join('')}</div>
       <p class="hint" id="fHint">${manual ? 'Elegido a mano.' : 'Se calcula solo con el chequeo. Puedes cambiarlo.'}</p>
+      <div id="fRetro"></div>
       <p class="label">Observaciones</p>
       <textarea id="fObs" placeholder="Ej: dejó vidrio sin envolver">${esc(v.obs)}</textarea>
       ${nueva ? '' : '<button class="btn danger" data-a="borrar">Eliminar visita</button>'}`);
@@ -301,20 +355,43 @@
     let resultado = v.resultado;
     if (nueva) { resultado = autoResultado({}); marcar(resultado); }
 
+    /* Muestra la retroalimentación en vivo y la insignia actual de esa vivienda */
+    const pintarRetro = () => {
+      $('#fRetro').innerHTML = resultado === 'cumple' ? '' :
+        `<p class="label">Retroalimentación para la vivienda</p>${retroHTML(leerCh()) || '<p class="hint">Marca en el chequeo lo que no cumplió para ver los consejos.</p>'}`;
+    };
+    const pintarViv = () => {
+      const k = Insignias.clave({ direccion: $('#fDir').value, casa: $('#fCasa').value });
+      const h = Insignias.viviendas(visitas.filter(x => x.id !== v.id)).find(x => x.clave === k);
+      $('#fViv').innerHTML = h ? `Vivienda conocida: ${h.nivel ? '<b>' + h.nivel.nombre + '</b>' : 'sin insignia'} · racha ${h.racha}` : '';
+    };
+    pintarRetro(); pintarViv();
+
+    sheet.oninput = e => { if (e.target.id === 'fDir' || e.target.id === 'fCasa') pintarViv(); };
     sheet.onchange = e => {
-      if (e.target.dataset.c && !manual) { resultado = autoResultado(leerCh()); marcar(resultado); vibrar(8); }
+      if (e.target.dataset.c) {
+        if (!manual) { resultado = autoResultado(leerCh()); marcar(resultado); }
+        vibrar(8); pintarRetro();
+      }
     };
     sheet.onclick = e => {
       const r = e.target.closest('[data-r]');
-      if (r) { resultado = r.dataset.r; manual = true; marcar(resultado); $('#fHint').textContent = 'Elegido a mano.'; return; }
+      if (r) { resultado = r.dataset.r; manual = true; marcar(resultado); $('#fHint').textContent = 'Elegido a mano.'; pintarRetro(); return; }
       const a = e.target.closest('[data-a]')?.dataset.a;
       if (a === 'cancelar') cerrarSheet();
       if (a === 'guardar') {
-        Object.assign(v, { direccion: $('#fDir').value.trim(), casa: $('#fCasa').value.trim(), ch: leerCh(), resultado, obs: $('#fObs').value.trim(), manual });
+        const nuevaDir = { direccion: $('#fDir').value.trim(), casa: $('#fCasa').value.trim() };
+        const k = Insignias.clave(nuevaDir);
+        const antes = Insignias.viviendas(visitas).find(h => h.clave === k);
+        Object.assign(v, nuevaDir, { ch: leerCh(), resultado, obs: $('#fObs').value.trim(), manual });
         if (nueva) visitas.push(v);
         store.set('visitas', visitas);
-        cerrarSheet(); renderSeguimiento(); toast('Visita guardada'); vibrar(15);
-        if (resultado === 'cumple') fiesta($('#resumen'));
+        const despues = Insignias.viviendas(visitas).find(h => h.clave === k);
+        renderSeguimiento(); vibrar(15);
+        const subio = despues.nivel && (!antes || !antes.nivel || NIVELES.indexOf(despues.nivel) > NIVELES.indexOf(antes.nivel));
+        if (resultado !== 'cumple') abrirRetro(v, antes, despues);
+        else if (subio) abrirLogro(despues);
+        else { cerrarSheet(); toast('Visita guardada'); fiesta($('#resumen')); }
       }
       if (a === 'borrar') {
         if (e.target.dataset.confirm) {
@@ -326,13 +403,120 @@
     };
   }
 
+  /* Mensaje para la vivienda (WhatsApp o copiar) */
+  function mensajeRetro(v, h) {
+    const fs = fallos(v.ch);
+    let t = `Hola, somos el equipo de reciclaje${sector.value ? ' del sector ' + sector.value : ''}. ` +
+      `Hoy revisamos el material de su vivienda (${dirTexto(v)}) y el resultado fue: ${RES[v.resultado].t}.\n\n`;
+    if (fs.length) t += 'Para la próxima le recomendamos:\n' + fs.map(c => `- ${RETRO[c.id].titulo}: ${RETRO[c.id].texto}`).join('\n') + '\n\n';
+    if (v.obs) t += `Observación: ${v.obs}\n\n`;
+    const s = h && h.sig;
+    t += s ? `Con ${s.racha - h.racha} ${s.racha - h.racha === 1 ? 'visita' : 'visitas'} seguidas que cumplan, su hogar gana la insignia "${s.nombre}". ` : '';
+    t += 'Gracias por apoyar el trabajo del reciclador.';
+    return t;
+  }
+  const abrirWA = txt => {
+    const a = document.createElement('a');
+    a.href = 'https://wa.me/?text=' + encodeURIComponent(txt);
+    a.target = '_blank'; a.rel = 'noopener';
+    document.body.appendChild(a); a.click(); a.remove();
+  };
+
+  function abrirRetro(v, antes, h) {
+    const perdio = v.resultado === 'no' && antes && antes.racha > 0;
+    const msg = mensajeRetro(v, h);
+    abrirSheet(`
+      <div class="sheet-head"><span></span><h3>Retroalimentación</h3><button class="link bold" data-a="ok">Listo</button></div>
+      <div class="retro-hero ${v.resultado}">
+        <span class="retro-big">${v.resultado === 'no' ? '✕' : '!'}</span>
+        <div><b>${RES[v.resultado].t}</b><span>${esc(dirTexto(v))}</span></div>
+      </div>
+      ${perdio ? `<p class="aviso">La vivienda perdió su racha de ${antes.racha} ${antes.racha === 1 ? 'visita' : 'visitas'}${antes.nivel ? ' y la insignia ' + antes.nivel.nombre : ''}. La puede recuperar en las próximas visitas.</p>` : ''}
+      <p class="label">Qué debe mejorar</p>
+      ${retroHTML(v.ch) || '<p class="hint">No se marcó ningún chequeo fallido. Revisa las observaciones.</p>'}
+      ${h && h.sig ? `<div class="card meta">${Insignias.insigniaMini(h.sig, 52)}<div><b>Próxima insignia: ${h.sig.nombre}</b><span>Le faltan ${h.sig.racha - h.racha} ${h.sig.racha - h.racha === 1 ? 'visita' : 'visitas'} seguidas que cumplan.</span></div></div>` : ''}
+      <button class="btn primary" data-a="wa"><svg><use href="#i-share"/></svg>Enviar consejos por WhatsApp</button>
+      <button class="btn" data-a="copiar"><svg><use href="#i-copy"/></svg>Copiar mensaje</button>`);
+    sheet.onclick = async e => {
+      const a = e.target.closest('[data-a]')?.dataset.a;
+      if (a === 'ok') { cerrarSheet(); toast('Visita guardada'); }
+      if (a === 'wa') abrirWA(msg);
+      if (a === 'copiar') { try { await navigator.clipboard.writeText(msg); toast('Mensaje copiado'); } catch { toast('No se pudo copiar'); } }
+    };
+  }
+
+  async function abrirLogro(h) {
+    const logo = await Insignias.logo();
+    abrirSheet(`
+      <div class="sheet-head"><span></span><h3>¡Nueva insignia!</h3><button class="link bold" data-a="ok">Listo</button></div>
+      <div class="logro">
+        <div class="sticker">${Insignias.sticker(h, logo)}</div>
+        <p class="logro-t">${esc(dirTexto(h))} ganó la insignia <b>${h.nivel.nombre}</b></p>
+        <p class="hint" style="text-align:center">${h.sig ? `Siguiente: ${h.sig.nombre} con ${h.sig.racha} visitas seguidas.` : 'Llegó al nivel más alto.'}</p>
+      </div>
+      <button class="btn primary" data-a="png"><svg><use href="#i-down"/></svg>Descargar sticker</button>`);
+    setTimeout(() => fiesta($('.sticker')), 200);
+    sheet.onclick = async e => {
+      const a = e.target.closest('[data-a]')?.dataset.a;
+      if (a === 'ok') cerrarSheet();
+      if (a === 'png') descargarSticker(h);
+    };
+  }
+
+  async function descargarSticker(h) {
+    try {
+      const r = await Insignias.exportar(h);
+      if (r === 'descargado') toast('Sticker descargado');
+      if (r === 'compartido') toast('Sticker listo');
+    } catch { toast('No se pudo generar el sticker'); }
+  }
+
+  async function abrirVivienda(k) {
+    const h = Insignias.viviendas(visitas).find(x => x.clave === k);
+    if (!h) return;
+    const logo = await Insignias.logo();
+    const prog = h.sig ? Math.round(h.racha / h.sig.racha * 100) : 100;
+    abrirSheet(`
+      <div class="sheet-head"><span></span><h3>Vivienda</h3><button class="link bold" data-a="ok">Listo</button></div>
+      <h2 class="viv-t">${esc(dirTexto(h))}</h2>
+      ${h.nivel
+        ? `<div class="sticker">${Insignias.sticker(h, logo)}</div>`
+        : `<div class="card meta">${Insignias.insigniaMini(null, 52)}<div><b>Todavía sin insignia</b><span>Con una visita que cumpla gana la insignia Semilla.</span></div></div>`}
+      <div class="card">
+        <div class="prog-row"><b>Racha actual: ${h.racha}</b><span>Mejor: ${h.mejor}</span></div>
+        <div class="bar"><i style="width:${prog}%;background:${(h.sig || h.nivel || NIVELES[0]).color}"></i></div>
+        <span class="hint" style="margin:0">${h.sig ? `Faltan ${h.sig.racha - h.racha} para ${h.sig.nombre}` : 'Nivel máximo alcanzado'}</span>
+      </div>
+      ${h.nivel ? '<button class="btn primary" data-a="png"><svg><use href="#i-down"/></svg>Descargar sticker para imprimir</button>' : ''}
+      <p class="label">Historial</p>
+      <div class="list inset">${h.visitas.slice().reverse().map(v => `
+        <button class="row" data-id="${v.id}"><span class="dot" style="background:${RES[v.resultado].c};border:0"></span>
+        <span class="row-main">${RES[v.resultado].t}<span class="row-sub">${esc(fechaCorta(v.fecha))}${v.obs ? ' · ' + esc(v.obs) : ''}</span></span>
+        <svg class="chev"><use href="#i-chev"/></svg></button>`).join('')}</div>
+      <button class="btn" data-a="nueva"><svg><use href="#i-plus"/></svg>Registrar visita aquí</button>`);
+    sheet.onclick = e => {
+      const r = e.target.closest('[data-id]');
+      if (r) return abrirVisita(visitas.find(v => v.id === r.dataset.id));
+      const a = e.target.closest('[data-a]')?.dataset.a;
+      if (a === 'ok') cerrarSheet();
+      if (a === 'png') descargarSticker(h);
+      if (a === 'nueva') {
+        abrirVisita();
+        $('#fDir').value = h.direccion; $('#fCasa').value = h.casa;
+        $('#fDir').dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    };
+  }
+
+
   /* Exportar: mismas columnas que la hoja de SEGUIMIENTO */
   const tabla = sep => {
     const si = b => b ? 'Sí' : 'No';
-    const cab = ['N°', 'Fecha', 'Reciclador', 'Sector', 'Dirección', 'Casa / apto', 'Saca bolsa blanca o marcada', 'Material limpio y seco', 'Aplastado / desarmado', 'Sin cortopunzantes sueltos', 'Resultado final', 'Observaciones'];
+    const cab = ['N°', 'Fecha', 'Reciclador', 'Sector', 'Dirección', 'Casa / apto', 'Saca bolsa blanca o marcada', 'Material limpio y seco', 'Aplastado / desarmado', 'Sin cortopunzantes sueltos', 'Resultado final', 'Observaciones', 'Insignia actual'];
+    const ins = new Map(Insignias.viviendas(visitas).map(h => [h.clave, h.nivel ? h.nivel.nombre : 'Sin insignia']));
     const filas = visitas.slice().sort((a, b) => a.fecha.localeCompare(b.fecha)).map((v, i) => [
       i + 1, new Date(v.fecha).toLocaleDateString('es-CO'), nombre.value, sector.value, v.direccion, v.casa,
-      si(v.ch.blanca), si(v.ch.limpio), si(v.ch.aplastado), si(v.ch.seguro), RES[v.resultado].t, v.obs]);
+      si(v.ch.blanca), si(v.ch.limpio), si(v.ch.aplastado), si(v.ch.seguro), RES[v.resultado].t, v.obs, ins.get(Insignias.clave(v))]);
     const cel = x => sep === ';' ? `"${String(x).replace(/"/g, '""')}"` : String(x).replace(/[\t\n]/g, ' ');
     return [cab, ...filas].map(f => f.map(cel).join(sep)).join('\r\n');
   };
@@ -360,10 +544,7 @@
     const txt = `Seguimiento reciclaje${sector.value ? ' - ' + sector.value : ''}\n` +
       `${nombre.value ? 'Reciclador: ' + nombre.value + '\n' : ''}` +
       `Casas visitadas: ${tot}\nCumple: ${c('cumple')}\nCumple parcial: ${c('parcial')}\nNo cumple: ${c('no')}`;
-    const a = document.createElement('a');
-    a.href = 'https://wa.me/?text=' + encodeURIComponent(txt);
-    a.target = '_blank'; a.rel = 'noopener';
-    document.body.appendChild(a); a.click(); a.remove();
+    abrirWA(txt);
   });
 
   /* Infografía */

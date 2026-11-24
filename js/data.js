@@ -122,3 +122,39 @@ const CHEQUEOS = [
   { id: 'aplastado', label: '¿Aplastado o desarmado?', sub: 'Botellas plásticas, cartón' },
   { id: 'seguro', label: '¿Sin cortopunzantes sueltos?' }
 ];
+
+/* Marca de la empresa: pon el logo en assets/logo.png (PNG con fondo transparente).
+   Si el archivo no existe, la app usa el ícono de la bolsa. */
+const MARCA = {
+  logo: 'assets/logo.png',
+  nombre: 'ProAmbientes'   // Sale en el borde de abajo del sticker
+};
+
+/* Retroalimentación cuando un chequeo falla */
+const RETRO = {
+  blanca: {
+    titulo: 'Separar en bolsa blanca',
+    texto: 'Saque el material aprovechable en bolsa blanca o marcada, siempre aparte de la bolsa negra.'
+  },
+  limpio: {
+    titulo: 'Enjuagar y escurrir',
+    texto: 'Enjuague rápido los envases (leche, yogur, latas) y déjelos escurrir. El cartón mojado o sucio ya no se lo compran al reciclador.'
+  },
+  aplastado: {
+    titulo: 'Aplastar y desarmar',
+    texto: 'Aplaste las botellas y póngales la tapa; desarme las cajas de cartón. Así el reciclador carga más material en un solo viaje.'
+  },
+  seguro: {
+    titulo: 'Cero cortopunzantes sueltos',
+    texto: 'Nunca meta vidrio roto, cuchillas o agujas sueltas. Envuélvalos en periódico o dentro de una botella cortada y marque "VIDRIO ROTO".'
+  }
+};
+
+/* Insignias por vivienda. Se ganan con visitas seguidas que cumplen.
+   "Cumple" suma 1 a la racha, "Cumple parcial" la mantiene y "No cumple" la reinicia. */
+const NIVELES = [
+  { id: 'semilla',  nombre: 'Semilla',   racha: 1,  color: '#8FD14F', oscuro: '#4E8A1E', lema: 'Empezó a reciclar bien' },
+  { id: 'brote',    nombre: 'Brote',     racha: 3,  color: '#34C759', oscuro: '#1E7A36', lema: 'Recicla con constancia' },
+  { id: 'arbol',    nombre: 'Árbol',     racha: 6,  color: '#1E9E45', oscuro: '#0F5C27', lema: 'Ejemplo para el barrio' },
+  { id: 'guardian', nombre: 'Guardián',  racha: 10, color: '#F5B700', oscuro: '#8A6300', lema: 'Aliado del reciclador' }
+];

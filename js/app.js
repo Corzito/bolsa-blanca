@@ -51,9 +51,25 @@
   /* ---------- Navegación por pestañas ---------- */
   const titulos = { inicio: 'ProAmbientes', guia: 'Guía', reto: 'Reto', reglas: 'Reglas', seguimiento: 'Seguimiento' };
   const nav = $('#nav');
+  /* Modo reciclador: la pestaña Seguimiento solo aparece en los celulares desbloqueados con PIN */
+  const esReciclador = () => store.get('modo', '') === 'reciclador';
+  const aplicarModo = () => {
+    const on = esReciclador();
+    document.documentElement.classList.toggle('modo-reciclador', on);
+    $('.tabbar a[data-tab=seguimiento]').hidden = !on;
+  };
   const mostrar = () => {
     const v = (location.hash || '#inicio').slice(1);
-    const vista = titulos[v] ? v : 'inicio';
+    if (v === 'reciclador') {
+      history.replaceState(null, '', location.pathname + (esReciclador() ? '#seguimiento' : '#inicio'));
+      if (!esReciclador()) setTimeout(() => abrirPIN(), 300);
+      return mostrar();
+    }
+    let vista = titulos[v] ? v : 'inicio';
+    if (vista === 'seguimiento' && !esReciclador()) {
+      vista = 'inicio';
+      history.replaceState(null, '', location.pathname + '#inicio');
+    }
     $$('.view').forEach(s => s.hidden = s.dataset.view !== vista);
     $$('.tabbar a').forEach(a => a.dataset.tab === vista ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
     $('#navTitle').textContent = titulos[vista];
@@ -551,6 +567,70 @@
     abrirWA(txt);
   });
 
+  /* ---------- PIN del reciclador ---------- */
+  function abrirPIN() {
+    let pin = '';
+    const teclas = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'borrar'];
+    abrirSheet(`
+      <div class="sheet-head"><button class="link" data-a="cancelar">Cancelar</button><h3>Modo reciclador</h3><span style="width:70px"></span></div>
+      <div class="pin">
+        <img src="${MARCA.logo}" alt="" class="pin-logo">
+        <p class="pin-t">Ingresa el código de ProAmbientes</p>
+        <div class="pin-dots" id="pinDots">${'<i></i>'.repeat(RECICLADOR.pin.length)}</div>
+        <div class="keypad">${teclas.map(t => t === '' ? '<span></span>'
+          : t === 'borrar' ? '<button data-k="borrar" aria-label="Borrar"><svg viewBox="0 0 24 24"><path d="M9 5h11a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H9l-6-7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="m12 9 6 6m0-6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>'
+          : `<button data-k="${t}">${t}</button>`).join('')}</div>
+      </div>`);
+    const pintar = () => $$('#pinDots i').forEach((d, i) => d.classList.toggle('on', i < pin.length));
+    sheet.onclick = e => {
+      if (e.target.closest('[data-a=cancelar]')) return cerrarSheet();
+      const k = e.target.closest('[data-k]')?.dataset.k;
+      if (!k) return;
+      vibrar(6);
+      $('#pinDots').classList.remove('error');
+      pin = k === 'borrar' ? pin.slice(0, -1) : (pin + k).slice(0, RECICLADOR.pin.length);
+      pintar();
+      if (pin.length < RECICLADOR.pin.length) return;
+      if (pin === RECICLADOR.pin) {
+        store.set('modo', 'reciclador');
+        aplicarModo();
+        cerrarSheet();
+        toast('Modo reciclador activado');
+        location.hash = 'seguimiento';
+        setTimeout(() => fiesta($('#resumen')), 400);
+      } else {
+        const dots = $('#pinDots');
+        dots.classList.remove('error'); void dots.offsetWidth; dots.classList.add('error');
+        vibrar([40, 50, 40]);
+        setTimeout(() => { pin = ''; pintar(); }, 450);
+      }
+    };
+  }
+
+  /* Mantener presionado el logo 3 segundos abre el PIN */
+  let presion;
+  const soltar = () => { clearTimeout(presion); marcaImg.classList.remove('presionando'); };
+  marcaImg.addEventListener('pointerdown', () => {
+    marcaImg.classList.add('presionando');
+    presion = setTimeout(() => {
+      soltar(); vibrar(20);
+      if (esReciclador()) location.hash = 'seguimiento'; else abrirPIN();
+    }, 3000);
+  });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => marcaImg.addEventListener(ev, soltar));
+  marcaImg.addEventListener('contextmenu', e => e.preventDefault());
+
+  /* Salir del modo reciclador (los registros no se borran) */
+  $('#salirModo').addEventListener('click', e => {
+    const b = e.currentTarget;
+    if (!b.dataset.confirm) { b.dataset.confirm = '1'; b.lastChild.textContent = 'Toca otra vez para confirmar'; return; }
+    delete b.dataset.confirm; b.lastChild.textContent = 'Salir del modo reciclador';
+    store.set('modo', '');
+    aplicarModo();
+    location.hash = 'inicio';
+    toast('Modo ciudadano');
+  });
+
   /* Infografía */
   $('#verInfo').addEventListener('click', () => abrirSheet(`
     <div class="sheet-head"><span></span><h3>Infografía</h3><button class="link bold" data-close>Listo</button></div>
@@ -561,6 +641,7 @@
   renderGuia();
   veredicto();
   renderSeguimiento();
+  aplicarModo();
   mostrar();
 
   /* Funciona sin internet (service worker) */

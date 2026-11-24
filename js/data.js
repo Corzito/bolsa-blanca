@@ -158,3 +158,8 @@ const NIVELES = [
   { id: 'arbol',    nombre: 'Árbol',     racha: 6,  color: '#1E9E45', oscuro: '#0F5C27', lema: 'Ejemplo para el barrio' },
   { id: 'guardian', nombre: 'Guardián',  racha: 10, color: '#F5B700', oscuro: '#8A6300', lema: 'Aliado del reciclador' }
 ];
+
+/* Código para activar el modo reciclador (pestaña Seguimiento).
+   Se activa manteniendo presionado el logo 3 segundos, o abriendo el link .../#reciclador
+   Cámbialo por el que quieras (solo números). */
+const RECICLADOR = { pin: '2580' };

@@ -345,3 +345,23 @@ main{position:relative;z-index:1}
 .splash p{margin:0;color:#1F6B5C;font-weight:600;font-size:16px;opacity:0;animation:fade .6s .7s forwards}
 .splash.fuera{opacity:0;transform:scale(1.06);pointer-events:none}
 @media (prefers-reduced-motion:reduce){.brand .marca,.splash img{animation:none}}
+
+/* ===== Modo reciclador / PIN ===== */
+.tabbar{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:1fr}
+.brand .marca{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation;transition:transform 3s linear,filter .3s}
+.brand .marca.presionando{animation:none;transform:scale(.9);filter:saturate(1.3)}
+.pin{text-align:center;padding:6px 0 10px}
+.sheet .pin-logo{width:130px;height:auto;display:block;margin:0 auto 6px}
+.pin-t{margin:0 0 18px;color:var(--ink2);font-size:16px}
+.pin-dots{display:flex;justify-content:center;gap:18px;margin-bottom:26px}
+.pin-dots i{width:14px;height:14px;border-radius:50%;border:2px solid var(--ink);transition:background .12s}
+.pin-dots i.on{background:var(--ink)}
+.pin-dots.error{animation:temblor .4s}
+.pin-dots.error i{border-color:var(--red)}
+.keypad{display:grid;grid-template-columns:repeat(3,76px);justify-content:center;gap:16px 26px}
+.keypad button{width:76px;height:76px;border-radius:50%;border:0;font-size:32px;font-weight:400;
+  background:var(--card);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);display:grid;place-items:center}
+.keypad button:active{background:var(--sep)}
+.keypad button[data-k=borrar]{background:none}
+.keypad svg{width:30px;height:30px}
+#salirModo svg{transform:rotate(90deg)}

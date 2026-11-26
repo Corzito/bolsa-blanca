@@ -1,6 +1,6 @@
 /* Guarda la app en el celular para que funcione sin internet.
    Si cambias algún archivo, sube el número de VERSION para que se actualice. */
-const VERSION = 'bolsa-blanca-v6';
+const VERSION = 'bolsa-blanca-v7';
 const ARCHIVOS = [
   './', './index.html', './css/styles.css', './js/data.js', './js/fondo.js', './js/insignias.js', './js/app.js',
   './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png',

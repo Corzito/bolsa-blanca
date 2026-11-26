@@ -644,6 +644,66 @@
   aplicarModo();
   mostrar();
 
+  /* ---------- Botón "Instalar aplicación" ---------- */
+  const btnInstalar = $('#instalar');
+  const instalada = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const ua = navigator.userAgent;
+  const esIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const esAndroid = /Android/i.test(ua);
+  let promptInstalar = null;
+
+  if (!instalada()) btnInstalar.hidden = false;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    promptInstalar = e;
+    if (!instalada()) btnInstalar.hidden = false;
+  });
+  window.addEventListener('appinstalled', () => {
+    btnInstalar.hidden = true;
+    promptInstalar = null;
+    toast('Aplicación instalada');
+    fiesta($('.brand'));
+  });
+
+  const paso = (n, html) => `<div class="paso"><span class="paso-n">${n}</span><div>${html}</div></div>`;
+  const icoCompartir = '<svg class="ico-inline" viewBox="0 0 24 24"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const icoMas = '<svg class="ico-inline" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  const icoMenu = '<svg class="ico-inline" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="19" r="2" fill="currentColor"/></svg>';
+
+  function guiaInstalar() {
+    const ios = `
+      ${paso(1, `Abre esta página en <b>Safari</b>.`)}
+      ${paso(2, `Toca el botón <b>Compartir</b> ${icoCompartir} (abajo en el iPhone, arriba en el iPad).`)}
+      ${paso(3, `Baja y toca <b>Agregar a inicio</b> ${icoMas}.`)}
+      ${paso(4, `Toca <b>Agregar</b>. El logo de ProAmbientes queda en tu pantalla.`)}`;
+    const android = `
+      ${paso(1, `Abre esta página en <b>Chrome</b>.`)}
+      ${paso(2, `Toca el menú ${icoMenu} arriba a la derecha.`)}
+      ${paso(3, `Toca <b>Instalar aplicación</b> o <b>Agregar a la pantalla principal</b>.`)}
+      ${paso(4, `Confirma con <b>Instalar</b>. El logo de ProAmbientes queda en tu pantalla.`)}`;
+    const pc = `
+      ${paso(1, `Abre esta página en <b>Chrome</b> o <b>Edge</b>.`)}
+      ${paso(2, `En la barra de direcciones toca el ícono de <b>instalar</b> ${icoMas}, o abre el menú ${icoMenu}.`)}
+      ${paso(3, `Elige <b>Instalar Bolsa Blanca</b>.`)}`;
+    abrirSheet(`
+      <div class="sheet-head"><span></span><h3>Instalar aplicación</h3><button class="link bold" data-close>Listo</button></div>
+      <div class="install-hero"><img src="icons/icon-192.png" alt=""><div><b>Bolsa Blanca</b><span>ProAmbientes</span></div></div>
+      <p class="label">${esIOS ? 'En iPhone o iPad' : esAndroid ? 'En Android' : 'En el computador'}</p>
+      <div class="pasos">${esIOS ? ios : esAndroid ? android : pc}</div>
+      <p class="hint">Después ábrela desde el ícono: funciona sin internet y a pantalla completa.</p>`);
+  }
+
+  btnInstalar.addEventListener('click', async () => {
+    if (promptInstalar) {
+      promptInstalar.prompt();
+      const { outcome } = await promptInstalar.userChoice;
+      promptInstalar = null;
+      if (outcome === 'dismissed') toast('Puedes instalarla cuando quieras');
+      return;
+    }
+    guiaInstalar();
+  });
+
   /* Funciona sin internet (service worker) */
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
     window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { }));
